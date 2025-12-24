@@ -47,7 +47,9 @@ app.post('/voice/process', async (req, res) => {
 });
 
 app.post('/voice/status', (req, res) => res.sendStatus(200));
-app.get('/', (req, res) => res.send('EchoLift AI Phone System Running!'));
+app.get('/', function(req, res) {
+  res.send('EchoLift AI Running');
+});
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => console.log('Server running on port', PORT));
