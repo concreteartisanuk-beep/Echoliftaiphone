@@ -1,9 +1,6 @@
 const express = require('express');
 const VoiceResponse = require('twilio').twiml.VoiceResponse;
 const Anthropic = require('@anthropic-ai/sdk');
-const express = require('express');
-const VoiceResponse = require('twilio').twiml.VoiceResponse;
-const Anthropic = require('@anthropic-ai/sdk');
 
 const app = express();
 app.use(express.urlencoded({ extended: false }));
@@ -14,23 +11,11 @@ console.log('ANTHROPIC_API_KEY exists:', !!process.env.ANTHROPIC_API_KEY);
 console.log('ANTHROPIC_API_KEY value:', process.env.ANTHROPIC_API_KEY ? 
   process.env.ANTHROPIC_API_KEY.substring(0, 10) + '...' : 
   'UNDEFINED - NOT SET!');
-console.log('All env vars:', Object.keys(process.env));
 console.log('========================');
 
 const anthropic = new Anthropic({
   apiKey: process.env.ANTHROPIC_API_KEY,
 });
-const app = express();
-app.use(express.urlencoded({ extended: false }));
-
-const anthropic = new Anthropic({
-  apiKey: process.env.ANTHROPIC_API_KEY,
-});
-
-// Log to verify the key is loaded (only first few characters for security)
-console.log('API Key loaded:', process.env.ANTHROPIC_API_KEY ? 
-  `Yes (${process.env.ANTHROPIC_API_KEY.substring(0, 7)}...)` : 
-  'NO - MISSING!');
 
 // Store conversations in memory (use database in production)
 const conversations = {};
@@ -135,10 +120,19 @@ app.post('/process-speech', async (req, res) => {
 
 // Health check
 app.get('/', (req, res) => {
-  res.send('AI Voice Agent is running!');
+  res.send('EchoLift AI Phone System Active');
 });
 
 const PORT = process.env.PORT || 10000;
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
 });
+
+
+ 
+  
+  
+  
+   
+  
+
