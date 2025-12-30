@@ -1,7 +1,25 @@
 const express = require('express');
 const VoiceResponse = require('twilio').twiml.VoiceResponse;
 const Anthropic = require('@anthropic-ai/sdk');
+const express = require('express');
+const VoiceResponse = require('twilio').twiml.VoiceResponse;
+const Anthropic = require('@anthropic-ai/sdk');
 
+const app = express();
+app.use(express.urlencoded({ extended: false }));
+
+// DEBUGGING - Check if API key exists
+console.log('=== ENVIRONMENT CHECK ===');
+console.log('ANTHROPIC_API_KEY exists:', !!process.env.ANTHROPIC_API_KEY);
+console.log('ANTHROPIC_API_KEY value:', process.env.ANTHROPIC_API_KEY ? 
+  process.env.ANTHROPIC_API_KEY.substring(0, 10) + '...' : 
+  'UNDEFINED - NOT SET!');
+console.log('All env vars:', Object.keys(process.env));
+console.log('========================');
+
+const anthropic = new Anthropic({
+  apiKey: process.env.ANTHROPIC_API_KEY,
+});
 const app = express();
 app.use(express.urlencoded({ extended: false }));
 
