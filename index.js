@@ -122,11 +122,6 @@ app.post('/process-speech', async (req, res) => {
 app.get('/', (req, res) => {
   res.send('EchoLift AI Phone System Active');
 });
-// Status callback endpoint
-app.post('/voice/status', (req, res) => {
-  console.log('Call status:', req.body.CallStatus);
-  res.sendStatus(200);
-});
 
 const PORT = process.env.PORT || 10000;
 app.listen(PORT, () => {
