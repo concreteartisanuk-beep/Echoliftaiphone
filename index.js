@@ -1,68 +1,121 @@
-const express = require('express')
-const VoiceResponse = require('twilio').twiml.VoiceResponse
-const Anthropic = require('@anthropic-ai/sdk')
+const express = require('express');
+const VoiceResponse = require('twilio').twiml.VoiceResponse;
+const Anthropic = require('@anthropic-ai/sdk');
 
-const app = express()
-app.use(express.urlencoded({ extended: false }))
+const app = express();
+app.use(express.urlencoded({ extended: false }));
 
-const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
-const calls = new Map()
+const anthropic = new Anthropic({
+  apiKey: process.env.ANTHROPIC_API_KEY,
+});
 
-app.post('/voice/incoming', function(req, res) {
-  calls.set(req.body.CallSid, [])
-  const response = new VoiceResponse()
+// Store conversations in memory (use database in production)
+const conversations = {};
+
+// Initial call handler
+app.post('/voice', (req, res) => {
+  const response = new VoiceResponse();
+  
   const gather = response.gather({
     input: 'speech',
-    action: '/voice/process',
+    action: '/process-speech',
     method: 'POST',
+    speechTimeout: 'auto',
     language: 'en-GB'
-  })
-  gather.say({ voice: 'Polly.Amy' }, 'Hello thank you for calling EchoLift AI')
-  res.type('text/xml').send(response.toString())
-})
-
-app.post('/voice/process', async function(req, res) {
-  const speech = req.body.SpeechResult || 'hello'
-  const callId = req.body.CallSid
-  let history = calls.get(callId) || []
-  history.push({ role: 'user', content: speech })
+  });
   
-  let aiResponse = 'Visit echoliftai.co.uk'
-  try {
-    const result = await anthropic.messages.create({
-      model: 'claude-sonnet-4-20250514',
-      max_tokens: 200,
-      system: 'You are a receptionist for EchoLift AI. We help UK businesses with AI phone systems, social media management, and video marketing. Be helpful and brief.',
-      messages: history
-    })
-    aiResponse = result.content[0].text
-  } catch (error) {
-    console.log('Error:', error)
+  gather.say({
+    voice: 'Google.en-GB-Neural2-A'
+  }, 'Hello! I\'m your AI assistant. How can I help you today?');
+  
+  // Fallback if no response
+  response.say('I didn\'t hear anything. Goodbye!');
+  
+  res.type('text/xml');
+  res.send(response.toString());
+});
+
+// Process speech and get AI response
+app.post('/process-speech', async (req, res) => {
+  const response = new VoiceResponse();
+  
+  const userSpeech = req.body.SpeechResult;
+  const callSid = req.body.CallSid;
+  
+  console.log(`User said: ${userSpeech}`);
+  
+  if (!userSpeech || userSpeech.trim() === '') {
+    response.say('I didn\'t catch that. Let me try again.');
+    response.redirect('/voice');
+    res.type('text/xml');
+    res.send(response.toString());
+    return;
   }
   
-  history.push({ role: 'assistant', content: aiResponse })
-  calls.set(callId, history)
+  // Initialize conversation history for this call
+  if (!conversations[callSid]) {
+    conversations[callSid] = [];
+  }
   
-  const response = new VoiceResponse()
-  const gather = response.gather({
-    input: 'speech',
-    action: '/voice/process',
-    method: 'POST',
-    language: 'en-GB'
-  })
-  gather.say({ voice: 'Polly.Amy' }, aiResponse)
-  res.type('text/xml').send(response.toString())
-})
+  // Add user message to history
+  conversations[callSid].push({
+    role: 'user',
+    content: userSpeech
+  });
+  
+  try {
+    // Get AI response from Claude
+    const message = await anthropic.messages.create({
+      model: 'claude-sonnet-4-20250514',
+      max_tokens: 200,
+      messages: conversations[callSid]
+    });
+    
+    const aiResponse = message.content[0].text;
+    console.log(`AI said: ${aiResponse}`);
+    
+    // Add AI response to history
+    conversations[callSid].push({
+      role: 'assistant',
+      content: aiResponse
+    });
+    
+    // Speak the AI response
+    response.say({
+      voice: 'Google.en-GB-Neural2-A'
+    }, aiResponse);
+    
+    // Continue the conversation
+    const gather = response.gather({
+      input: 'speech',
+      action: '/process-speech',
+      method: 'POST',
+      speechTimeout: 'auto',
+      language: 'en-GB'
+    });
+    
+    gather.say({
+      voice: 'Google.en-GB-Neural2-A'
+    }, 'Is there anything else I can help you with?');
+    
+    // Hangup option
+    response.say('Thank you for calling. Goodbye!');
+    
+  } catch (error) {
+    console.error('Error calling Claude API:', error);
+    response.say('I\'m sorry, I\'m having technical difficulties. Please try again later.');
+  }
+  
+  res.type('text/xml');
+  res.send(response.toString());
+});
 
-app.post('/voice/status', function(req, res) {
-  res.sendStatus(200)
-})
+// Health check
+app.get('/', (req, res) => {
+  res.send('AI Voice Agent is running!');
+});
 
-app.get('/', function(req, res) {
-  res.send('EchoLift AI Phone System Active')
-})
-
-const PORT = process.env.PORT || 3000
-app.listen(PORT, function() {
-  console.log('EchoLift AI ready on port ' + PORT)
-})
+const PORT = process.env.PORT || 10000;
+app.listen(PORT, () => {
+  console.log(`Server running on port ${PORT}`);
+});
