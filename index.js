@@ -9,6 +9,11 @@ const anthropic = new Anthropic({
   apiKey: process.env.ANTHROPIC_API_KEY,
 });
 
+// Log to verify the key is loaded (only first few characters for security)
+console.log('API Key loaded:', process.env.ANTHROPIC_API_KEY ? 
+  `Yes (${process.env.ANTHROPIC_API_KEY.substring(0, 7)}...)` : 
+  'NO - MISSING!');
+
 // Store conversations in memory (use database in production)
 const conversations = {};
 
