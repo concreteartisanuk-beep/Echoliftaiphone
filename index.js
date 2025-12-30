@@ -49,7 +49,7 @@ app.post('/voice', (req, res) => {
   
   gather.say({
     voice: 'Google.en-GB-Neural2-A'
-  }, 'Hello! I\'m your AI assistant. How can I help you today?');
+  }, 'Hello! I\'m Nelly your AI assistant. How can I help you today?');
   
   // Fallback if no response
   response.say('I didn\'t hear anything. Goodbye!');
